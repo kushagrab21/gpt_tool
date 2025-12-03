@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ca-super-tool
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /docs
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: UVICORN_PORT
+        value: "8000"
+
