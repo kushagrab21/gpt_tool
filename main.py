@@ -103,6 +103,50 @@ async def root():
     }
 
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint that verifies rulebook loading."""
+    try:
+        from engine.rulebook_loader import get_rulebook
+        rulebook = get_rulebook()
+        
+        if rulebook is None:
+            return {
+                "status": "unhealthy",
+                "error": "Rulebook is None"
+            }
+        
+        sections = rulebook.get("sections", {})
+        if not isinstance(sections, dict):
+            return {
+                "status": "unhealthy",
+                "error": "Sections is not a dict"
+            }
+        
+        # Check for key sections
+        key_sections = []
+        if "schedule_iii_engine" in sections:
+            key_sections.append("schedule_iii_engine")
+        if "gst_itc_engine" in sections:
+            key_sections.append("gst_itc_engine")
+        if "tds_tcs_engine" in sections:
+            key_sections.append("tds_tcs_engine")
+        
+        return {
+            "status": "healthy",
+            "rulebook_loaded": True,
+            "sections_count": len(sections),
+            "key_sections": key_sections,
+            "key_sections_present": len(key_sections) == 3
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+
+
 @app.post("/api/ca_super_tool", response_model=SuperToolResponse)
 async def ca_super_tool(request: SuperToolRequest):
     """

@@ -21,7 +21,21 @@ def expand_rules(data: Dict[str, Any]) -> Dict[str, Any]:
     context = data.get("context", {})
     
     rulebook = get_rulebook()
-    sections = rulebook.get("sections", {})
+    
+    # Critical fix: Handle None rulebook
+    if rulebook is None:
+        return {
+            "expanded_rules": [],
+            "rule_type": rule_type,
+            "rules_count": 0,
+            "error": "Rulebook not loaded"
+        }
+    
+    sections = rulebook.get("sections", {}) or {}
+    
+    # Critical fix: Ensure sections is always a dict
+    if not isinstance(sections, dict):
+        sections = {}
     
     expanded_rules = []
     
@@ -39,10 +53,11 @@ def expand_rules(data: Dict[str, Any]) -> Dict[str, Any]:
     elif rule_type == "tds":
         tds_section = get_section("tds_tcs_engine")
         tds_sections = tds_section.get("tds_sections", {})
-        expanded_rules = list(tds_sections.keys())
+        expanded_rules = list(tds_sections.keys()) if isinstance(tds_sections, dict) else []
     
     else:
         # Generic expansion from all sections
+        # Safe iteration: sections is guaranteed to be a dict
         for section_name, section_data in sections.items():
             if isinstance(section_data, dict):
                 expanded_rules.append({

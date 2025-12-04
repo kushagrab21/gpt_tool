@@ -30,10 +30,9 @@ def get_rulebook() -> Dict[str, Any]:
         yaml.YAMLError: If the YAML file is malformed
     """
     if not os.path.exists(RULEBOOK_PATH):
-        raise FileNotFoundError(
-            f"Rulebook file not found at: {RULEBOOK_PATH}. "
-            "Please ensure complete_ca_rulebook_v2.yaml exists in the project root."
-        )
+        print(f"ERROR: Rulebook file not found at: {RULEBOOK_PATH}")
+        # Return empty structure instead of raising to allow graceful degradation
+        return {"sections": {}}
     
     try:
         with open(RULEBOOK_PATH, 'r', encoding='utf-8') as f:
@@ -53,16 +52,28 @@ def get_rulebook() -> Dict[str, Any]:
             
             if rulebook is None:
                 # If YAML is empty or invalid, return empty structure
+                print("WARNING: YAML parsing returned None. Using fallback structure.")
                 return {"sections": {}}
             
             # Ensure sections key exists
             if "sections" not in rulebook:
                 rulebook["sections"] = {}
             
+            # Critical fix: Ensure sections is always a dict, never None
+            if rulebook.get("sections") is None:
+                rulebook["sections"] = {}
+            
             return rulebook
+    except FileNotFoundError:
+        print(f"ERROR: Rulebook file not found: {RULEBOOK_PATH}")
+        return {"sections": {}}
     except yaml.YAMLError as e:
         # Return minimal structure if YAML parsing fails
-        print(f"Warning: YAML parsing error: {e}. Using fallback structure.")
+        print(f"WARNING: YAML parsing error: {e}. Using fallback structure.")
+        return {"sections": {}}
+    except Exception as e:
+        # Catch any other unexpected errors
+        print(f"ERROR: Unexpected error loading rulebook: {e}")
         return {"sections": {}}
 
 

@@ -17,8 +17,41 @@ def map_tb_to_fs(data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dictionary with mapped financial statement structure
     """
-    rulebook_section = get_section("schedule_iii_engine")
+    rulebook_section = get_section("schedule_iii_engine") or {}
     mapping_rules = rulebook_section.get("schedule_iii_mapping_rules", [])
+    
+    # Fallback rules if rulebook not loaded
+    if not mapping_rules:
+        mapping_rules = [
+            {
+                "ledger_keywords": ["cash", "cash in hand", "bank"],
+                "mapped_to": "current_assets/cash_and_cash_equivalents"
+            },
+            {
+                "ledger_keywords": ["inventory", "stock", "goods"],
+                "mapped_to": "current_assets/inventory"
+            },
+            {
+                "ledger_keywords": ["receivable", "debtor"],
+                "mapped_to": "current_assets/trade_receivables"
+            },
+            {
+                "ledger_keywords": ["loan", "borrowing"],
+                "mapped_to": "non_current_liabilities/long_term_borrowings"
+            },
+            {
+                "ledger_keywords": ["equity", "capital", "reserve"],
+                "mapped_to": "equity"
+            },
+            {
+                "ledger_keywords": ["revenue", "income", "sale"],
+                "mapped_to": "profit_loss/revenue"
+            },
+            {
+                "ledger_keywords": ["expense", "cost"],
+                "mapped_to": "profit_loss/expenses"
+            }
+        ]
     
     tb_items = data.get("tb_items", [])
     
