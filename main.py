@@ -4,7 +4,7 @@ Unified Accounting Reasoning Engine (UARE) for CA-Auto v1.0
 """
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional
 import hashlib
 import json
@@ -29,8 +29,22 @@ app = FastAPI(
 class SuperToolRequest(BaseModel):
     """Request schema for the CA Super Tool API."""
     task: str
-    data: Dict[str, Any]
-    settings: Optional[Dict[str, Any]] = {}
+    data: Dict[str, Any] = Field(..., description="Task-specific data dictionary")
+    settings: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Optional settings dictionary")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "task": "schedule3_classification",
+                "data": {
+                    "items": [
+                        {"ledger": "Unsecured Loan from Director", "amount": 400000}
+                    ]
+                },
+                "settings": {}
+            }
+        }
+    }
 
 
 class SuperToolResponse(BaseModel):
