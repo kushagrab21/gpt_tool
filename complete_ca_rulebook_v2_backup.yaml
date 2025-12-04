@@ -1,0 +1,1221 @@
+version: "2.0"
+title: "CA Super Tool – Complete CA Rulebook"
+description: "Master YAML rulebook for CA Super Tool: AS 1–29, GST, TDS, Schedule III, JE engine, FS mapping, audit, ledger normalization, bank reconciliation."
+metadata:
+jurisdiction: "India"
+authority: "ICAI / Companies Act / GST / Income-tax Act (logic-level only)"
+disclaimer: "Logic-level mapping only. Does not reproduce proprietary or copyrighted texts."
+
+sections:
+as_standards:
+meta:
+description: "Accounting Standards (AS 1–29) – high-level rule engine for recognition, measurement, and disclosure."
+usage:
+- "classification"
+- "treatment_suggestion"
+- "disclosure_check"
+- "policy_consistency_check"
+
+AS1:
+  name: "Disclosure of Accounting Policies"
+  scope:
+    - "All enterprises"
+  fundamental_assumptions:
+    - going_concern
+    - consistency
+    - accrual
+  selection_principles:
+    - prudence
+    - substance_over_form
+    - materiality
+  key_rules:
+    - id: as1_disclose_significant_policies
+      condition: "Enterprise prepares general purpose financial statements."
+      action: "Disclose all significant accounting policies in one place."
+    - id: as1_policy_change_requires_disclosure
+      condition: "Accounting policy is changed and has a material effect."
+      action: "Disclose nature of change and its financial impact."
+  triggers_for_review:
+    - "Change in law or regulation"
+    - "New AS/Ind AS adoption"
+    - "Change in business model"
+  disclosures:
+    - measurement_basis
+    - inventory_valuation_method
+    - depreciation_methods
+    - revenue_recognition_policy
+    - foreign_currency_policy
+
+AS2:
+  name: "Valuation of Inventories"
+  measurement: "Lower of Cost and Net Realisable Value (NRV)"
+  cost_formulas_allowed:
+    - FIFO
+    - Weighted_Average
+  cost_formulas_not_allowed:
+    - LIFO
+  components_of_cost:
+    include:
+      - purchase_price
+      - import_duties_and_taxes_not_recoverable
+      - freight_and_handling
+      - conversion_costs
+      - other_costs_to_bring_to_present_location_and_condition
+    exclude:
+      - abnormal_wastage
+      - storage_costs_not_part_of_production
+      - administrative_overheads_not_related_to_production
+      - selling_and_distribution_costs
+  nrv_definition: "Estimated selling price in the ordinary course of business less estimated costs of completion and costs necessary to make the sale."
+  rules:
+    - id: as2_measurement_rule
+      condition: "Carrying_cost > NRV"
+      action: "Write down inventory to NRV and recognize loss in P&L."
+    - id: as2_reverse_write_down
+      condition: "NRV subsequently increases and previous write-down no longer required."
+      action: "Reverse write-down to the extent of original amount and reduce current period expense."
+  disclosures:
+    - "Accounting policy for measuring inventories"
+    - "Cost formula used (FIFO / Weighted Average)"
+    - "Total carrying amount of inventories"
+    - "Write-downs and reversals recognized in P&L"
+
+AS3:
+  name: "Cash Flow Statements"
+  scope:
+    - "All listed companies and other enterprises as per ICAI guidance"
+  classification:
+    categories:
+      - operating_activities
+      - investing_activities
+      - financing_activities
+  methods:
+    operating_cash_flow_methods:
+      - direct_method
+      - indirect_method
+  operating_examples:
+    cash_inflows:
+      - "Cash receipts from sale of goods and services"
+      - "Refunds of taxes"
+    cash_outflows:
+      - "Payments to suppliers and employees"
+      - "Payments of taxes"
+  investing_examples:
+    - "Purchase and sale of PPE"
+    - "Purchase and sale of investments"
+    - "Loans advanced and recovered"
+  financing_examples:
+    - "Issue of shares and debentures"
+    - "Borrowings and repayment of borrowings"
+    - "Payment of dividends"
+  rules:
+    - id: as3_interest_dividend_classification
+      note: "For AS (non-Ind AS) enterprises – interest and dividends can be classified based on policy but must be consistent."
+  disclosures:
+    - "Reconciliation between net profit and cash from operating activities"
+    - "Non-cash transactions disclosed separately"
+
+AS4:
+  name: "Contingencies and Events Occurring After Balance Sheet Date"
+  scope:
+    - "Contingent gains and losses"
+    - "Events after reporting date but before approval"
+  event_types:
+    adjusting_events:
+      definition: "Provide evidence of conditions existing on the balance sheet date."
+      examples:
+        - "Court decision confirming an existing obligation"
+        - "Bankruptcy of a debtor existing at year-end"
+    non_adjusting_events:
+      definition: "Indicative of conditions arising after the balance sheet date."
+      examples:
+        - "Destruction of major plant by fire after year-end"
+        - "Announcement of major restructuring after year-end"
+  rules:
+    - id: as4_adjusting_event
+      condition: "Event provides further evidence of conditions existing at balance sheet date."
+      action: "Adjust assets and liabilities."
+    - id: as4_non_adjusting_event_material
+      condition: "Non-adjusting event is material."
+      action: "Disclose nature and estimate of financial effect."
+  contingencies:
+    treatment:
+      probable_loss: "Provide for the loss if reasonably estimable."
+      possible_loss: "Disclose as contingent liability."
+      remote_loss: "No provision or disclosure normally required."
+
+AS5:
+  name: "Net Profit or Loss for the Period, Prior Period Items and Changes in Accounting Policies"
+  scope:
+    - "Presentation of P&L"
+    - "Prior period items"
+    - "Changes in accounting estimates"
+    - "Changes in accounting policies"
+  definitions:
+    prior_period_item: "Income or expense relating to prior periods arising from errors or omissions."
+    change_in_estimate: "Adjustment due to revision of the carrying amount of an asset or liability or related expense."
+  rules:
+    - id: as5_prior_period_item_presentation
+      condition: "Item qualifies as prior period item."
+      action: "Disclose separately in P&L with nature and amount."
+    - id: as5_change_in_estimate
+      condition: "Change arises from better information or new developments."
+      action: "Account prospectively affecting current and future periods."
+    - id: as5_change_in_policy
+      condition: "Accounting policy is changed."
+      action: "Adjust comparatives if practicable and disclose nature, reason and effect."
+  disclosures:
+    - "Prior period items – separately shown"
+    - "Nature and amount of changes in accounting policies"
+    - "Nature and amount of changes in accounting estimates if material"
+
+AS7:
+  name: "Construction Contracts"
+  scope:
+    - "Construction of assets or combination of assets"
+    - "Contracts specifically negotiated"
+  methods:
+    revenue_recognition: "Percentage of completion method"
+  contract_types:
+    - fixed_price_contract
+    - cost_plus_contract
+  rules:
+    - id: as7_recognise_revenue_costs
+      condition: "Outcome of construction contract can be estimated reliably."
+      action: "Recognise contract revenue and contract costs by reference to stage of completion."
+    - id: as7_expected_loss
+      condition: "Total contract costs are expected to exceed total contract revenue."
+      action: "Recognise expected loss immediately as expense."
+  stage_of_completion_measures:
+    - "Proportion of costs incurred to estimated total costs"
+    - "Surveys of work performed"
+    - "Completion of physical proportion of contract work"
+  disclosures:
+    - "Contract revenue recognised"
+    - "Methods used to determine stage of completion"
+    - "Amounts due from/due to customers"
+
+AS9:
+  name: "Revenue Recognition"
+  scope:
+    - "Sale of goods"
+    - "Rendering of services"
+    - "Use by others of enterprise resources (interest, royalties, dividends)"
+  sale_of_goods:
+    recognition_conditions:
+      - "Significant risks and rewards of ownership have been transferred."
+      - "No effective control retained or managerial involvement."
+      - "Amount of revenue can be measured reliably."
+      - "Probable economic benefits will flow."
+    special_cases:
+      consignment_sales: "Recognise when goods are sold by consignee."
+      approval_sales: "Recognise on acceptance or lapse of rejection period."
+  rendering_of_services:
+    methods:
+      - "Completed service contract method"
+      - "Proportionate completion method"
+  interest_royalty_dividend:
+    interest: "Time proportion basis."
+    royalties: "Accrual in accordance with the substance of relevant agreement."
+    dividends: "When right to receive is established."
+  exclusions:
+    - "Revenue from construction contracts (AS 7)."
+    - "Lease income, insurance, etc., which are covered by other standards."
+  disclosures:
+    - "Revenue recognition policies for each significant category."
+    - "Amount of each significant category of revenue recognised."
+
+AS10:
+  name: "Property, Plant and Equipment"
+  scope:
+    - "Tangible items held for use in production, supply, rental or administrative purposes with useful life > 12 months."
+  initial_measurement:
+    components_of_cost:
+      - purchase_price_net_of_discounts
+      - non_refundable_taxes_and_duties
+      - directly_attributable_costs_to_bring_asset_to_working_condition
+    excludes:
+      - opening_new_facility_costs
+      - advertising_and_promotional_costs
+      - general_administration_overheads
+  subsequent_measurement:
+    models:
+      - cost_model
+      - revaluation_model
+  depreciation:
+    basis:
+      - "Systematic allocation over useful life."
+    factors:
+      - expected_usage
+      - expected_physical_wear_and_tear
+      - obsolescence
+    component_accounting: "Significant components with different useful lives depreciated separately."
+  revaluation:
+    surplus_treatment: "Transfer to revaluation reserve (equity)."
+    deficit_treatment: "Charge to P&L to extent not offset against previous surplus."
+  derecognition:
+    conditions:
+      - "On disposal"
+      - "When no future economic benefits expected"
+    gain_loss_treatment: "Recognise in P&L."
+  disclosures:
+    - "Depreciation methods."
+    - "Useful lives or depreciation rates."
+    - "Gross and net carrying amounts."
+    - "Reconciliation of carrying amount at beginning and end of period."
+
+AS11:
+  name: "The Effects of Changes in Foreign Exchange Rates"
+  scope:
+    - "Foreign currency transactions"
+    - "Translation of financial statements of foreign operations"
+  key_concepts:
+    - "Foreign currency"
+    - "Functional currency"
+    - "Monetary vs non-monetary items"
+  monetary_items:
+    measurement:
+      - "Restate at closing rate on balance sheet date."
+  non_monetary_items:
+    measurement:
+      at_historical_cost: "Use transaction date rate."
+      at_fair_value: "Use rate when fair value determined."
+  exchange_differences:
+    recognition:
+      - "Normally in P&L."
+    special_cases:
+      - "Capitalisation permitted for certain long-term foreign currency monetary items as per notification/GN."
+  disclosures:
+    - "Amount of exchange differences recognised in profit or loss."
+    - "Policy for capitalising exchange differences, if any."
+
+AS12:
+  name: "Accounting for Government Grants"
+  types_of_grants:
+    - revenue_related
+    - capital_related
+  approaches:
+    revenue_grants:
+      options:
+        - "Credit to P&L over related periods."
+        - "Deduct from related expense."
+    capital_grants:
+      options:
+        - "Present as deferred income and recognise over useful life."
+        - "Deduct from cost of asset."
+  refund_of_grants:
+    treatment:
+      revenue_grants: "Treat as extraordinary item / P&L adjustment."
+      capital_grants: "Increase cost of asset or reduce deferred income."
+  disclosures:
+    - "Accounting policy for government grants."
+    - "Nature and extent of grants recognised."
+    - "Unfulfilled conditions and contingencies."
+
+AS13:
+  name: "Accounting for Investments"
+  classification:
+    long_term_investments:
+      measurement: "Carried at cost, subject to provision for diminution other than temporary."
+    current_investments:
+      measurement: "Carried at lower of cost and fair value."
+  cost_components:
+    include:
+      - acquisition_price
+      - brokerage_and_fees
+      - duties_and_taxes_not_recoverable
+  rules:
+    - id: as13_provision_long_term
+      condition: "Diminution in value of long-term investment is other than temporary."
+      action: "Create provision to reduce carrying amount."
+    - id: as13_current_investment_valuation
+      condition: "Fair value < cost for current investment."
+      action: "Value at fair value and recognise diminution in P&L."
+  disclosures:
+    - "Accounting policies for determination of carrying amount."
+    - "Classification between current and long-term investments."
+    - "Market value of quoted investments."
+
+AS14:
+  name: "Accounting for Amalgamations"
+  types:
+    - "Amalgamation in the nature of merger (pooling of interests method)."
+    - "Amalgamation in the nature of purchase."
+  pooling_of_interests_method:
+    characteristics:
+      - "All assets and liabilities recorded at existing carrying amounts."
+      - "Reserves of transferor become reserves of transferee."
+  purchase_method:
+    characteristics:
+      - "Assets and liabilities recorded at fair value."
+      - "Difference between consideration and net assets = goodwill/capital reserve."
+  rules:
+    - id: as14_goodwill_treatment
+      condition: "Purchase consideration > net assets."
+      action: "Recognise goodwill and amortise over useful life (not exceeding 5 years ordinarily)."
+  disclosures:
+    - "For each amalgamation, method of accounting used."
+    - "Particulars of purchase consideration and assets/liabilities taken over."
+
+AS15:
+  name: "Employee Benefits"
+  categories:
+    - short_term_employee_benefits
+    - post_employment_benefits
+    - other_long_term_benefits
+    - termination_benefits
+  short_term_employee_benefits:
+    examples:
+      - "Wages and salaries"
+      - "Short-term compensated absences"
+      - "Profit-sharing and bonuses (if due within 12 months)"
+    measurement: "Undiscounted amount expected to be paid."
+  post_employment_benefits:
+    schemes:
+      - defined_contribution_plans
+      - defined_benefit_plans
+  defined_contribution_plan:
+    rule: "Recognise contribution as expense when employee renders service."
+  defined_benefit_plan:
+    rule: "Actuarial valuation required, recognise present value of obligation less plan assets."
+  disclosures:
+    - "Description of benefit schemes."
+    - "Actuarial assumptions and movement in obligation and plan assets."
+
+AS16:
+  name: "Borrowing Costs"
+  definition: "Interest and other costs incurred in connection with borrowing of funds."
+  qualifying_asset: "Asset that takes substantial period of time to get ready for intended use or sale."
+  rules:
+    - id: as16_capitalisation_criteria
+      condition: "Borrowing costs directly attributable to acquisition/construction of qualifying asset."
+      action: "Capitalize as part of cost of asset."
+    - id: as16_commencement
+      condition: "Expenditure being incurred, borrowing costs incurred, and activities to prepare asset are in progress."
+      action: "Start capitalization."
+    - id: as16_suspension
+      condition: "Active development of asset is suspended."
+      action: "Suspend capitalization during extended suspension period."
+    - id: as16_cessation
+      condition: "Substantially all activities to prepare the asset are complete."
+      action: "Cease capitalization."
+  other_borrowing_costs:
+    treatment: "Recognise as expense in period incurred."
+  disclosures:
+    - "Accounting policy for borrowing costs."
+    - "Amount of borrowing costs capitalised."
+
+AS17:
+  name: "Segment Reporting"
+  scope:
+    - "Enterprise whose equity or debt securities are listed or in process of listing."
+  segment_types:
+    - business_segments
+    - geographical_segments
+  key_measures:
+    - segment_revenue
+    - segment_result
+    - segment_assets
+    - segment_liabilities
+  rules:
+    - id: as17_primary_secondary_segments
+      condition: "Risks and returns primarily influenced by product/services."
+      action: "Business segments as primary reporting format."
+  disclosures:
+    - "Segment revenue, result, assets, liabilities for primary and secondary segments."
+    - "Basis of inter-segment pricing."
+
+AS18:
+  name: "Related Party Disclosures"
+  related_parties_examples:
+    - "Holding company and subsidiaries."
+    - "Associates and joint ventures."
+    - "Key management personnel (KMP)."
+    - "Relatives of KMP."
+  rules:
+    - id: as18_disclosure_requirement
+      condition: "Related party relationship exists."
+      action: "Disclose nature of relationship, volume and elements of related party transactions, outstanding balances."
+  exclusions:
+    - "Intra-government transactions."
+  disclosures:
+    - "Nature of related party relationships."
+    - "Volume of transactions and outstanding balances."
+
+AS19:
+  name: "Leases"
+  classification:
+    - finance_lease
+    - operating_lease
+  finance_lease:
+    definition: "Lease that transfers substantially all risks and rewards incident to ownership."
+    lessee_treatment:
+      - "Recognise leased asset and lease liability."
+      - "Depreciate asset."
+      - "Apportion finance charges over lease term."
+  operating_lease:
+    lessee_treatment:
+      - "Recognise lease rental as expense on straight-line basis unless another systematic basis is more representative."
+  disclosures:
+    - "Total of future minimum lease payments."
+    - "Lease rental expense/income for period."
+
+AS20:
+  name: "Earnings Per Share"
+  measures:
+    - basic_eps
+    - diluted_eps
+  basic_eps:
+    formula: "Net profit or loss for period attributable to equity shareholders / weighted average number of equity shares outstanding."
+  diluted_eps:
+    formula: "Adjust numerator and denominator for effects of dilutive potential equity shares."
+  disclosures:
+    - "Basic and diluted EPS with numerators and denominators used."
+
+AS21:
+  name: "Consolidated Financial Statements"
+  scope:
+    - "Parent-subsidiary relationships."
+  consolidation:
+    method: "Line-by-line aggregation of like items of assets, liabilities, income and expenses."
+  rules:
+    - "Eliminate intra-group balances and transactions."
+    - "Align accounting policies where practicable."
+  minority_interest: "Present separately in consolidated balance sheet and P&L."
+
+AS22:
+  name: "Accounting for Taxes on Income"
+  scope:
+    - "Current tax"
+    - "Deferred tax"
+  timing_differences:
+    examples:
+      - "Depreciation differences"
+      - "Provision for doubtful debts"
+  rules:
+    - id: as22_recognise_deferred_tax
+      condition: "Timing difference gives rise to taxable or deductible amounts in future."
+      action: "Recognise deferred tax asset or liability subject to prudence."
+    - id: as22_dta_prudence
+      condition: "Deferred tax asset arises."
+      action: "Recognise only if there is reasonable certainty of future taxable income. For unabsorbed depreciation/carry-forward losses, require virtual certainty."
+  disclosures:
+    - "Break-up of deferred tax assets and liabilities."
+
+AS23:
+  name: "Accounting for Investments in Associates in Consolidated Financial Statements"
+  method: "Equity method for associates."
+  rules:
+    - "Record investment at cost initially."
+    - "Adjust carrying amount for post-acquisition change in investor's share of net assets of associate."
+  disclosures:
+    - "Name, ownership interest, and method of accounting for associates."
+
+AS24:
+  name: "Discontinuing Operations"
+  identifying_features:
+    - "Represents separate major line of business or geographical area."
+    - "Part of single coordinated plan to dispose such a line/area."
+  disclosures:
+    - "Description of discontinuing operation."
+    - "Timing and carrying amounts of assets and liabilities to be disposed."
+    - "P&L of discontinuing operations."
+
+AS25:
+  name: "Interim Financial Reporting"
+  scope:
+    - "Financial statements for a period shorter than full financial year."
+  rules:
+    - "Use same accounting policies as annual financial statements."
+    - "Recognise costs and revenues that are incurred unevenly only if criteria for asset/liability recognition met."
+  disclosures:
+    - "Similar to annual FS but condensed."
+
+AS26:
+  name: "Intangible Assets"
+  recognition_criteria:
+    - "Identifiable, non-monetary, without physical substance."
+    - "Controlled by enterprise."
+    - "Probable future economic benefits and cost can be measured reliably."
+  measurement:
+    initial: "Cost."
+    subsequent:
+      - "Cost model less amortisation and impairment."
+  amortisation:
+    rule: "Systematic over useful life, usually not exceeding 10 years unless justified."
+  disclosures:
+    - "Amortisation method and rate."
+    - "Reconciliation of carrying amount."
+
+AS27:
+  name: "Financial Reporting of Interests in Joint Ventures"
+  types:
+    - jointly_controlled_operations
+    - jointly_controlled_assets
+    - jointly_controlled_entities
+  rules:
+    - "In consolidated FS, use proportionate consolidation for jointly controlled entities."
+  disclosures:
+    - "Contingent liabilities and commitments relating to joint ventures."
+
+AS28:
+  name: "Impairment of Assets"
+  scope:
+    - "PPE, intangible assets, goodwill, etc."
+  key_concepts:
+    recoverable_amount: "Higher of net selling price and value in use."
+  rules:
+    - id: as28_recognise_impairment
+      condition: "Carrying amount > recoverable amount."
+      action: "Recognise impairment loss in P&L."
+    - id: as28_reversal
+      condition: "Recoverable amount increases due to change in estimates."
+      action: "Reverse previous impairment loss to extent allowed."
+  disclosures:
+    - "Impairment losses and reversals by class of asset."
+
+AS29:
+  name: "Provisions, Contingent Liabilities and Contingent Assets"
+  definitions:
+    provision: "Liability of uncertain timing or amount."
+    contingent_liability: "Possible obligation or present obligation not recognised due to uncertainty."
+    contingent_asset: "Possible asset arising from past events, existence confirmed by uncertain future events."
+  rules:
+    - id: as29_recognise_provision
+      condition: "Present obligation from past event, probable outflow of economic benefits, reliable estimate possible."
+      action: "Recognise provision."
+    - id: as29_contingent_liability
+      condition: "Possible obligation or present obligation not meeting provision criteria."
+      action: "Disclose as contingent liability."
+    - id: as29_contingent_asset
+      condition: "Inflow of economic benefits is probable."
+      action: "Disclose contingent asset; recognise only when realisation is virtually certain."
+  disclosures:
+    - "Movement in each class of provision."
+    - "Nature of obligation and expected timing of outflows."
+ind_as_mappings:
+  meta:
+    description: "High-level logic mapping between AS and Ind AS for classification, treatment differences, and presentation."
+    usage:
+      - "policy_alignment"
+      - "treatment_difference_explanation"
+      - "fs_classification"
+
+  mappings:
+    AS1_to_IndAS1:
+      as_reference: "AS 1 – Disclosure of Accounting Policies"
+      ind_as_reference: "Ind AS 1 – Presentation of Financial Statements"
+      differences:
+        - "Ind AS 1 requires current vs non-current classification explicitly."
+        - "Presentation structure more prescriptive."
+        - "Other comprehensive income introduced."
+      alignment_rules:
+        - "Ensure policy disclosures meet Ind AS 1 para requirements."
+
+    AS2_to_IndAS2:
+      differences:
+        - "Ind AS 2 requires cost formula consistency unless justified."
+        - "NRV calculations require stricter fair value logic."
+      alignment_rules:
+        - "Inventory valuation remains lower of cost and NRV."
+
+    AS10_to_IndAS16:
+      differences:
+        - "Ind AS 16 requires component accounting mandatorily."
+        - "Revaluation model uses OCI for revaluation surplus."
+      alignment_rules:
+        - "Useful lives per Schedule II but enterprise-specific justification allowed."
+
+    AS11_to_IndAS21:
+      differences:
+        - "Functional currency is mandatory."
+        - "Exchange differences always in P&L unless specific exceptions."
+      alignment_rules:
+        - "Foreign operations consolidated using closing rate method."
+
+    AS15_to_IndAS19:
+      differences:
+        - "Full actuarial valuation with OCI treatment."
+        - "Defined benefit obligations use present value method."
+      alignment_rules:
+        - "Recognise remeasurements in OCI."
+
+    AS17_to_IndAS108:
+      differences:
+        - "Ind AS uses management approach for segment identification."
+      alignment_rules:
+        - "Segments based on how CODM views business."
+
+    AS18_to_IndAS24:
+      differences:
+        - "Related party definitions expanded."
+        - "Disclosures more extensive."
+      alignment_rules:
+        - "Use Ind AS categories for related party filtering."
+
+    AS20_to_IndAS33:
+      differences:
+        - "EPS calculation includes OCI impact."
+      alignment_rules:
+        - "Handle dilutive instruments using treasury stock method."
+
+schedule_iii_engine:
+  meta:
+    description: "Rule engine for classification, grouping, and disclosure under Schedule III Division I & II."
+    division_applicability:
+      non_ind_as: "Division I"
+      ind_as: "Division II"
+    decision_logic:
+      current_non_current_rules:
+        current_asset_if:
+          - "Realised in operating cycle"
+          - "Held for trading"
+          - "Realised within 12 months"
+          - "Cash and cash equivalent not restricted"
+        current_liability_if:
+          - "Settled in operating cycle"
+          - "Due within 12 months"
+          - "Held for trading"
+          - "No unconditional right to defer settlement >12 months"
+
+  asset_classification:
+    current_assets:
+      - inventory
+      - trade_receivables
+      - cash_and_cash_equivalents
+      - short_term_loans_and_advances
+      - other_current_assets
+    non_current_assets:
+      - ppe
+      - capital_work_in_progress
+      - intangible_assets
+      - long_term_investments
+      - deferred_tax_assets
+      - long_term_loans_and_advances
+
+  liability_classification:
+    current_liabilities:
+      - trade_payables
+      - current_borrowings
+      - current_portion_long_term_debt
+      - other_current_liabilities
+      - short_term_provisions
+    non_current_liabilities:
+      - long_term_borrowings
+      - deferred_tax_liability
+      - long_term_provisions
+
+  equity_classification:
+    share_capital:
+      components:
+        - authorised_capital
+        - issued_capital
+        - subscribed_capital
+    reserves_and_surplus:
+      subheads:
+        - securities_premium
+        - capital_reserve
+        - revaluation_reserve
+        - general_reserve
+        - surplus_profit_and_loss
+
+  notes_automation:
+    ppe_note:
+      required_fields:
+        - gross_block_opening
+        - additions
+        - deletions
+        - gross_block_closing
+        - accumulated_dep_opening
+        - depreciation_for_year
+        - adjustments
+        - accumulated_dep_closing
+        - net_block
+    trade_receivables_note:
+      ageing_buckets:
+        - "< 6 months"
+        - "6–12 months"
+        - "1–2 years"
+        - "> 2 years"
+      disclosures:
+        - disputed_outstanding
+        - doubtful_outstanding
+        - related_party_receivables
+    related_party_note:
+      required_disclosures:
+        - relationship
+        - nature_of_transaction
+        - amount
+        - outstanding_balance
+        - provisions_for_doubtful_debts
+
+  schedule_iii_mapping_rules:
+    - id: map_unsecured_loan_from_director
+      ledger_keywords: ["unsecured loan", "director loan"]
+      mapped_to: "non_current_liabilities/long_term_borrowings"
+      conditions:
+        - "Repayable beyond 12 months"
+    - id: map_advances_from_customers
+      ledger_keywords: ["advance from customer", "customer advance"]
+      mapped_to: "current_liabilities/other_current_liabilities"
+      conditions:
+        - "Obligation to deliver goods/services"
+    - id: map_furniture_and_fixtures
+      ledger_keywords: ["furniture", "fixtures"]
+      mapped_to: "non_current_assets/ppe"
+    - id: map_insurance_expense
+      ledger_keywords: ["insurance"]
+      mapped_to: "pnl/operating_expenses"
+    - id: map_cash_in_hand
+      ledger_keywords: ["cash", "cash in hand"]
+      mapped_to: "current_assets/cash_and_cash_equivalents"
+gst_itc_engine:
+  meta:
+    description: "Complete GST Input Tax Credit (ITC) eligibility, blocking, conditional rules, reconciliation, and vendor-level compliance engine."
+    applicability: "GST Act, 2017 – Logic-level rules only."
+    usage:
+      - itc_classification
+      - 3b_2b_reconciliation
+      - vendor_compliance_check
+      - blocked_itc_detection
+      - itc_reversal_calculation
+
+  general_itc_principles:
+    conditions_for_itc:
+      - "Possession of tax invoice/debit note."
+      - "Receipt of goods or services."
+      - "Tax actually paid to government by supplier."
+      - "Filing of supplier GSTR-1 and it reflects in 2B."
+      - "Recipient files GSTR-3B."
+    disallow_if:
+      - "Invoice not in GSTR-2B (except allowed categories)."
+      - "Supplier not compliant."
+      - "Goods/services used for personal consumption."
+      - "Capital goods under exempt output."
+      - "Composition dealer purchases."
+
+  itc_allowed:
+    categories:
+      business_inputs:
+        - raw_materials
+        - trading_goods
+        - consumables
+        - spares
+      business_input_services:
+        - consultancy
+        - professional_services
+        - cloud_services
+        - software_subscriptions
+        - freight_inward
+      capital_goods:
+        - machinery
+        - equipment
+        - computers
+      reverse_charge_paid:
+        rule: "ITC available only after RCM payment in cash."
+
+  itc_blocked:
+    blocked_under_section_17_5:
+      motor_vehicles:
+        rule: "Blocked unless used for taxable supply of transportation services."
+      food_beverages:
+        rule: "Blocked unless outward supply is same category."
+      club_membership:
+        rule: "Always blocked."
+      personal_consumption:
+        rule: "Blocked always."
+      works_contract:
+        rule: "Blocked unless for further supply of works contract services."
+      goods_lost_stolen_destroyed:
+        rule: "Blocked with no exceptions."
+      free_samples_and_gifts:
+        rule: "Blocked; schedule I supply not applicable."
+
+    blocked_other_reasons:
+      - "Supplier filed GSTR-1 but has not paid tax (flag for vendor risk)."
+      - "Supplier under cancellation proceedings."
+      - "Invoice belonging to composite dealer."
+      - "ITC claimed after time limit under Sec 16(4)."
+
+  itc_conditional:
+    rules:
+      provisional_itc_limit:
+        description: "Only auto-populated ITC in GSTR-2B allowed; no provisional ITC."
+      partial_blocking_due_to_mixed_use:
+        rule: "If goods/services used for both taxable and exempt supply, proportionate ITC allowed."
+      capital_goods_mixed_use:
+        rule: "5-year proportionate reversal rule applies."
+
+  gstr_3b_vs_2b_reconciliation:
+    meta:
+      purpose: "Compare ITC claimed in GSTR-3B with ITC reflected in GSTR-2B and classify differences."
+    mismatch_categories:
+      claimed_not_in_2b:
+        description: "ITC claimed in 3B but invoice not in 2B."
+      in_2b_not_claimed:
+        description: "Eligible ITC from 2B not claimed in 3B."
+      excess_claim:
+        description: "Claimed > 2B reflection; verify eligibility."
+      supplier_non_compliant:
+        description: "Supplier filed GSTR-1 but not GSTR-3B."
+
+    reconciliation_rules:
+      - id: rule_missing_in_2b
+        condition: "Invoice exists in books / 3B but not in 2B."
+        action: "Flag as vendor follow-up; no ITC unless supplier files."
+      - id: rule_eligible_late_invoice
+        condition: "Invoice appears in later 2B."
+        action: "Allow ITC in that period."
+      - id: rule_excess_itc
+        condition: "Claim > 2B amount."
+        action: "Flag as excess; reverse with interest if needed."
+      - id: rule_ineligible_due_to_nature
+        condition: "Invoice category is blocked (Sec 17(5))."
+        action: "Mark as permanently ineligible."
+
+  vendor_compliance_engine:
+    vendor_categories:
+      compliant_supplier:
+        conditions:
+          - "Filed GSTR-1 on time"
+          - "Filed GSTR-3B on time"
+          - "GSTIN active"
+          - "Invoice reflected in 2B"
+      risky_supplier:
+        conditions:
+          - "Filed GSTR-1 but not GSTR-3B"
+          - "GSTIN under cancellation"
+          - "Frequent mismatches in 2B"
+      non_compliant_supplier:
+        conditions:
+          - "Not filing GSTR-1"
+          - "Not filing returns for >2 periods"
+          - "2B reporting irregular or absent"
+
+    risk_scores:
+      compliant_supplier: 1
+      risky_supplier: 5
+      non_compliant_supplier: 10
+
+    vendor_actions:
+      - id: vendor_follow_up
+        condition: "Vendor risk score >=5 OR invoice not in 2B."
+        action: "Send reminder for filing GSTR-1."
+      - id: vendor_hold_payment
+        condition: "Risk score >=10."
+        action: "Hold payment until compliance ensured."
+
+  itc_reversal_engine:
+    categories:
+      reversal_due_to_exempt_supply:
+        formula: "Reversal = Common ITC × (Exempt turnover / Total turnover)"
+      reversal_due_to_non_payment_180_days:
+        condition: "Invoice unpaid for 180+ days."
+        action:
+          - "Reverse ITC."
+          - "Add amount to output tax liability."
+          - "Re-avail ITC when paid."
+      reversal_due_to_depreciation_claim_u_s_32:
+        rule: "If GST component capitalized in asset cost, ITC cannot be claimed."
+
+  itc_automation_mapping:
+    ledger_keywords_mapping:
+      freight_inward:
+        mapped_to: "eligible/input_service"
+        rationale: "Freight inward is part of cost of supply."
+      canteen_expense:
+        mapped_to: "blocked/food_beverages"
+      marketing_gifts:
+        mapped_to: "blocked/free_samples"
+      laptop_purchase:
+        mapped_to: "eligible/capital_goods"
+      vehicle_purchase:
+        mapped_to: "blocked/motor_vehicle"
+      machinery_spares:
+        mapped_to: "eligible/input_goods"
+
+  gst_journal_entry_rules:
+    rcm_purchase:
+      entry:
+        - {Dr: "Expense / Asset"}
+        - {Dr: "Input CGST"}
+        - {Dr: "Input SGST"}
+        - {Cr: "RCM Output Liability"}
+      condition: "Service falls under RCM."
+    rcm_payment:
+      entry:
+        - {Dr: "RCM Output Liability"}
+        - {Cr: "Bank"}
+    itc_availment:
+      entry:
+        - {Dr: "Input CGST/SGST/IGST"}
+        - {Cr: "RCM Output Liability" }
+
+  gst_red_flags:
+    - "Invoice without GSTIN"
+    - "Supplier GSTIN cancelled"
+    - "Invoice not present in GSTR-2B for 3+ consecutive months"
+    - "Input service used for exempt output"
+    - "High-value ITC claimed at year end"
+    - "Major variation between 3B and 2B"
+tds_tcs_engine:
+  meta:
+    description: "TDS/TCS rule engine for classification by section, rate determination, threshold checks, and journal logic."
+    usage:
+      - "section_classification"
+      - "tds_rate_calculation"
+      - "tds_default_detection"
+      - "tds_ledger_tagging"
+      - "tcs_computation"
+
+  tds_sections:
+    section_192:
+      name: "TDS on Salaries"
+      payer: "Employer"
+      payee: "Employee"
+      basis: "Average rate based on slab after considering exemptions/deductions."
+      threshold: "No basic threshold; TDS whenever estimated taxable salary > basic exemption."
+      rules:
+        - id: s192_monthly_tds
+          condition: "Employee on payroll; salary taxable after computation."
+          action: "Compute annual tax, divide over months, deduct monthly TDS."
+      journal:
+        deduction:
+          - {Dr: "Salary Expense"}
+          - {Cr: "TDS Payable – Salaries"}
+          - {Cr: "Net Salary Payable"}
+
+    section_194C:
+      name: "TDS on Payments to Contractors"
+      payer: "Specified persons including companies, firms, etc."
+      payee: "Resident contractor or sub-contractor"
+      threshold_single: 30000
+      threshold_aggregate: 100000
+      rate:
+        individual_huf: 0.01
+        others: 0.02
+        no_pan: 0.20
+      applicability_conditions:
+        - "Payment for carrying out any work (including supply of labour)."
+      exclusions:
+        - "Payments purely for purchase of goods without any work component."
+      rules:
+        - id: s194c_single_payment
+          condition: "Single payment > 30000 INR."
+          action: "TDS applicable at section rate."
+        - id: s194c_aggregate_payment
+          condition: "Aggregate payments in FY > 100000 INR."
+          action: "TDS applicable on entire sum over threshold."
+      journal:
+        deduction:
+          - {Dr: "Contract Expense"}
+          - {Cr: "TDS Payable – 194C"}
+          - {Cr: "Contractor Payable"}
+
+    section_194J:
+      name: "TDS on Fees for Professional or Technical Services"
+      payer: "Any person (other than individual/HUF not covered by audit)."
+      payee: "Resident professional, technical service provider, royalty, non-compete."
+      threshold: 30000
+      rate:
+        professional_services: 0.10
+        technical_services: 0.02
+        no_pan: 0.20
+      professional_services_examples:
+        - "Legal"
+        - "Medical"
+        - "Engineering"
+        - "Architectural"
+        - "Accountancy"
+        - "Technical consultancy"
+      rules:
+        - id: s194j_threshold_check
+          condition: "Aggregate fees per payee per FY > 30000 INR."
+          action: "Deduct TDS at applicable rate."
+      journal:
+        deduction:
+          - {Dr: "Professional Charges"}
+          - {Cr: "TDS Payable – 194J"}
+          - {Cr: "Professional Payable"}
+
+    section_194I:
+      name: "TDS on Rent"
+      payer: "Any person (subject to applicability)."
+      payee: "Resident landlord"
+      threshold: 240000
+      rate:
+        plant_machinery_equipment: 0.02
+        land_building_furniture_fittings: 0.10
+        no_pan: 0.20
+      rules:
+        - id: s194i_threshold
+          condition: "Aggregate rent per landlord per FY > 240000 INR."
+          action: "Deduct TDS at section-specific rate."
+      journal:
+        deduction:
+          - {Dr: "Rent Expense"}
+          - {Cr: "TDS Payable – 194I"}
+          - {Cr: "Landlord Payable"}
+
+    section_194Q:
+      name: "TDS on Purchase of Goods"
+      payer: "Buyer whose preceding year turnover > 10 crore."
+      payee: "Resident seller"
+      threshold: 5000000
+      rate:
+        normal: 0.01
+        no_pan: 0.05
+      rules:
+        - id: s194q_trigger
+          condition: "Purchase of goods from resident seller in FY exceeds 50 lakh."
+          action: "Deduct TDS on amount exceeding 50 lakh."
+        - id: s194q_priority_over_206C1H
+          condition: "Both 194Q (TDS) and 206C(1H) (TCS on sales) triggered."
+          action: "Apply 194Q TDS; seller not required to collect 206C(1H) on same transaction."
+      journal:
+        deduction:
+          - {Dr: "Purchase"}
+          - {Cr: "TDS Payable – 194Q"}
+          - {Cr: "Creditor Payable"}
+
+    section_194R:
+      name: "TDS on Benefit or Perquisite in Respect of Business or Profession"
+      payer: "Any person providing benefit/perquisite to a resident in course of business/profession."
+      threshold: 20000
+      rate:
+        normal: 0.10
+        no_pan: 0.20
+      rules:
+        - id: s194r_trigger
+          condition: "Aggregate value of benefit/perquisite to resident exceeds 20k in FY."
+          action: "Deduct TDS on value of benefit."
+        - id: s194r_grossing_up
+          condition: "Benefit given in kind or partly in kind."
+          action: "Either recover tax from recipient or gross-up the value and bear tax."
+      journal:
+        deduction_cash_component:
+          - {Dr: "Sales Promotion / Business Expense"}
+          - {Cr: "TDS Payable – 194R"}
+          - {Cr: "Party Payable / Bank"}
+
+    section_194H:
+      name: "TDS on Commission or Brokerage"
+      threshold: 15000
+      rate:
+        normal: 0.05
+        no_pan: 0.20
+      rules:
+        - id: s194h_threshold
+          condition: "Commission per payee per FY exceeds 15000 INR."
+          action: "Deduct TDS at 5%."
+      journal:
+        deduction:
+          - {Dr: "Commission Expense"}
+          - {Cr: "TDS Payable – 194H"}
+          - {Cr: "Commission Payable"}
+
+    section_194IA:
+      name: "TDS on Transfer of Immovable Property (other than agricultural land)"
+      threshold: 5000000
+      rate:
+        normal: 0.01
+      rules:
+        - id: s194ia_trigger
+          condition: "Consideration for transfer of immovable property >= 50 lakh."
+          action: "Deduct TDS at 1% of consideration."
+      journal:
+        deduction:
+          - {Dr: "Property Asset"}
+          - {Cr: "TDS Payable – 194IA"}
+          - {Cr: "Seller Payable / Bank"}
+
+    section_206C_1H:
+      name: "TCS on Sale of Goods"
+      collector: "Seller whose turnover > 10 crore in preceding FY."
+      buyer_threshold: 5000000
+      rate:
+        normal: 0.001
+        no_pan: 0.01
+      rules:
+        - id: s206c1h_trigger
+          condition: "Sale of goods to a buyer exceeding 50 lakh in FY and 194Q not applicable."
+          action: "Collect TCS on consideration received exceeding threshold."
+      journal:
+        collection:
+          - {Dr: "Customer"}
+          - {Cr: "Sales"}
+          - {Cr: "TCS Payable – 206C(1H)"}
+
+  tds_classification_engine:
+    mapping_by_nature:
+      salary:
+        probable_section: "192"
+      professional_fee:
+        probable_section: "194J"
+      technical_service_fee:
+        probable_section: "194J"
+      contractor_payment:
+        probable_section: "194C"
+      rent_land_building:
+        probable_section: "194I"
+      rent_plant_machinery:
+        probable_section: "194I"
+      purchase_above_threshold_business:
+        probable_section: "194Q"
+      commission_brokerage:
+        probable_section: "194H"
+      property_purchase:
+        probable_section: "194IA"
+      business_perquisite:
+        probable_section: "194R"
+
+    decision_tree:
+      - id: dt_salary_vs_professional
+        question: "Is the person an employee of the entity?"
+        yes: "Section 192"
+        no: "Next"
+      - id: dt_contract_vs_professional
+        question: "Is the contract for specific professional service?"
+        yes: "Section 194J"
+        no: "Section 194C"
+      - id: dt_goods_vs_services
+        question: "Is the transaction primarily purchase of goods and buyer turnover > 10 crore?"
+        yes: "Section 194Q (subject to threshold)."
+        no: "Evaluate for 194C/194J."
+
+  tds_journal_engine:
+    generic_tds_entry:
+      deduction:
+        - {Dr: "Expense / Asset"}
+        - {Cr: "TDS Payable – [Section]"}
+        - {Cr: "Party Payable / Bank"}
+      payment_to_government:
+        - {Dr: "TDS Payable – [Section]"}
+        - {Cr: "Bank"}
+
+  tds_compliance_engine:
+    due_dates:
+      monthly_deposit:
+        description: "TDS deducted in a month to be deposited by 7th of next month (30 Apr for Mar)."
+      quarterly_returns:
+        forms:
+          - "Form 24Q for salaries"
+          - "Form 26Q for non-salary"
+        due_dates_generic: "Quarterly as per rules."
+    defaults_and_consequences:
+      interest_for_late_deduction:
+        rate: 0.01
+        calculation_basis: "Per month or part thereof from date deductible to date deducted."
+      interest_for_late_payment:
+        rate: 0.015
+        calculation_basis: "Per month or part thereof from date deducted to date paid."
+      disallowance_under_40a_ia:
+        rule: "30% of expense may be disallowed if TDS not deducted/deposited as required."
+
+  tds_red_flags:
+    - "Expenses in nature of professional/technical services without any TDS."
+    - "Contractor payments exceeding thresholds with no TDS."
+    - "Rent above 2.4 lakh per landlord with no TDS."
+    - "Large purchases from resident sellers with no 194Q check."
+    - "High commission/brokerage with no TDS."
+    - "Frequent interest debits under 201(1A) (TDS defaults)."
