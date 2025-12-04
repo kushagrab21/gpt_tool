@@ -145,53 +145,185 @@ def classify_pnl(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def classify_bs(data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Auto-classify Balance Sheet items.
+    Auto-classify Balance Sheet items using rulebook schedule_iii_mapping_rules.
     
     Args:
         data: Dictionary containing Balance Sheet items
         
     Returns:
-        Dictionary with classified Balance Sheet structure
+        Dictionary with classified Balance Sheet structure in fractal format
     """
+    rulebook_section = get_section("schedule_iii_engine") or {}
+    mapping_rules = rulebook_section.get("schedule_iii_mapping_rules", [])
+    
+    # Get asset/liability classification from rulebook
+    asset_classification = rulebook_section.get("asset_classification", {})
+    liability_classification = rulebook_section.get("liability_classification", {})
+    equity_classification = rulebook_section.get("equity_classification", {})
+    
     items = data.get("items", [])
     
     classified = {
-        "assets": {"current": [], "non_current": []},
-        "liabilities": {"current": [], "non_current": []},
+        "assets": {
+            "current": [],
+            "non_current": []
+        },
+        "liabilities": {
+            "current": [],
+            "non_current": []
+        },
         "equity": []
     }
+    
+    unmatched_items = []
+    flags = []
     
     for item in items:
         ledger = str(item.get("ledger", "")).lower()
         amount = float(item.get("amount", 0) or 0)
         balance_type = item.get("balance_type", "debit")
         
-        if balance_type == "debit":
-            if "current" in ledger or "short" in ledger:
-                classified["assets"]["current"].append(item)
+        matched = False
+        matched_category = None
+        
+        # Try rulebook mapping rules first
+        for rule in mapping_rules:
+            keywords = [kw.lower() for kw in rule.get("ledger_keywords", [])]
+            if any(keyword in ledger for keyword in keywords):
+                matched_category = rule.get("mapped_to", "")
+                matched = True
+                break
+        
+        if matched and matched_category:
+            # Parse category (e.g., "non_current_assets/ppe" or "current_liabilities/other_current_liabilities")
+            category_parts = matched_category.split("/")
+            
+            if len(category_parts) >= 2:
+                main_category = category_parts[0]
+                sub_category = category_parts[1]
+                
+                # Add classification metadata to item
+                item_with_classification = {
+                    **item,
+                    "classified_category": matched_category,
+                    "rule_matched": rule.get("id", "")
+                }
+                
+                if "asset" in main_category.lower():
+                    if "non_current" in main_category.lower():
+                        classified["assets"]["non_current"].append(item_with_classification)
+                    else:
+                        classified["assets"]["current"].append(item_with_classification)
+                elif "liability" in main_category.lower() or "borrowing" in main_category.lower():
+                    if "non_current" in main_category.lower():
+                        classified["liabilities"]["non_current"].append(item_with_classification)
+                    else:
+                        classified["liabilities"]["current"].append(item_with_classification)
+                elif "equity" in main_category.lower() or "capital" in main_category.lower():
+                    classified["equity"].append(item_with_classification)
+                elif "pnl" in main_category.lower():
+                    # P&L items shouldn't be in BS, but handle gracefully
+                    flags.append(f"P&L item found in BS classification: {ledger}")
+                    unmatched_items.append(item)
+                else:
+                    unmatched_items.append(item)
             else:
-                classified["assets"]["non_current"].append(item)
-        elif balance_type == "credit":
-            if "equity" in ledger or "capital" in ledger or "reserve" in ledger:
-                classified["equity"].append(item)
-            elif "current" in ledger or "short" in ledger:
-                classified["liabilities"]["current"].append(item)
-            else:
-                classified["liabilities"]["non_current"].append(item)
+                unmatched_items.append(item)
+        else:
+            # Fallback to balance type logic
+            if balance_type == "debit":
+                # Check if it's clearly current (cash, inventory, receivables)
+                if any(kw in ledger for kw in ["cash", "bank", "inventory", "stock", "receivable", "debtor", "advance"]):
+                    classified["assets"]["current"].append(item)
+                elif any(kw in ledger for kw in ["ppe", "property", "plant", "equipment", "machinery", "building", "furniture", "intangible"]):
+                    classified["assets"]["non_current"].append(item)
+                else:
+                    # Default to non-current for debit balances
+                    classified["assets"]["non_current"].append(item)
+            elif balance_type == "credit":
+                if any(kw in ledger for kw in ["equity", "capital", "reserve", "surplus"]):
+                    classified["equity"].append(item)
+                elif any(kw in ledger for kw in ["payable", "creditor", "borrowing", "loan"]):
+                    # Check if long-term
+                    if any(kw in ledger for kw in ["long", "term", "non-current"]):
+                        classified["liabilities"]["non_current"].append(item)
+                    else:
+                        classified["liabilities"]["current"].append(item)
+                else:
+                    # Default to current liability
+                    classified["liabilities"]["current"].append(item)
+            
+            unmatched_items.append(item)
+            flags.append(f"Item classified using fallback logic: {ledger}")
     
-    return classified
+    # Build fractal output
+    micro = {
+        "items": items,
+        "classified": classified,
+        "unmatched_items": unmatched_items
+    }
+    
+    meso = {
+        "classification_summary": {
+            "current_assets_count": len(classified["assets"]["current"]),
+            "non_current_assets_count": len(classified["assets"]["non_current"]),
+            "current_liabilities_count": len(classified["liabilities"]["current"]),
+            "non_current_liabilities_count": len(classified["liabilities"]["non_current"]),
+            "equity_count": len(classified["equity"]),
+            "unmatched_count": len(unmatched_items)
+        },
+        "rulebook_used": bool(mapping_rules),
+        "flags": flags
+    }
+    
+    macro = {
+        "summary": {
+            "total_items": len(items),
+            "classified_items": len(items) - len(unmatched_items),
+            "rulebook_integrated": bool(mapping_rules),
+            "total_assets": sum(
+                item.get("amount", 0) for item in classified["assets"]["current"] + classified["assets"]["non_current"]
+            ),
+            "total_liabilities": sum(
+                item.get("amount", 0) for item in classified["liabilities"]["current"] + classified["liabilities"]["non_current"]
+            ),
+            "total_equity": sum(item.get("amount", 0) for item in classified["equity"])
+        },
+        "flags": flags
+    }
+    
+    return {
+        "micro": micro,
+        "meso": meso,
+        "macro": macro
+    }
 
 
 def map_cashflow(data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Map items to Cash Flow Statement categories.
+    Map items to Cash Flow Statement categories using AS3 rules from rulebook.
+    Ensures PPE-related items are classified as investing activities.
     
     Args:
         data: Dictionary containing transaction/ledger data
         
     Returns:
-        Dictionary with cash flow mapping
+        Dictionary with cash flow mapping in fractal format
     """
+    # Get AS3 cashflow rules from rulebook
+    rulebook = get_section("as_standards") or {}
+    as3_section = rulebook.get("AS3", {}) if isinstance(rulebook, dict) else {}
+    
+    # Get classification examples from AS3
+    operating_examples = as3_section.get("operating_examples", {})
+    investing_examples = as3_section.get("investing_examples", [])
+    financing_examples = as3_section.get("financing_examples", [])
+    
+    # Get schedule III mapping for PPE detection
+    schedule3_section = get_section("schedule_iii_engine") or {}
+    asset_classification = schedule3_section.get("asset_classification", {})
+    non_current_assets = asset_classification.get("non_current_assets", [])
+    
     items = data.get("items", [])
     
     cashflow = {
@@ -200,20 +332,140 @@ def map_cashflow(data: Dict[str, Any]) -> Dict[str, Any]:
         "financing": []
     }
     
+    flags = []
+    unmatched_items = []
+    
+    # PPE keywords for investing classification
+    ppe_keywords = ["ppe", "property", "plant", "equipment", "machinery", "building", 
+                    "furniture", "fixtures", "vehicle", "capital work", "cwip", 
+                    "intangible", "goodwill", "patent", "trademark"]
+    
+    # Operating keywords
+    operating_keywords = ["sale", "purchase", "expense", "revenue", "operating", 
+                        "supplier", "customer", "employee", "salary", "rent", 
+                        "utility", "tax", "gst", "tds"]
+    
+    # Financing keywords
+    financing_keywords = ["loan", "borrowing", "equity", "share", "capital", 
+                         "dividend", "interest paid", "debt", "repayment"]
+    
+    # Investing keywords (beyond PPE)
+    investing_keywords = ["investment", "purchase of", "sale of", "advance", 
+                         "loan advanced", "loan recovered"]
+    
     for item in items:
         ledger = str(item.get("ledger", "")).lower()
+        description = str(item.get("description", "")).lower()
         amount = float(item.get("amount", 0) or 0)
         
-        if any(keyword in ledger for keyword in ["sale", "purchase", "expense", "revenue", "operating"]):
-            cashflow["operating"].append(item)
-        elif any(keyword in ledger for keyword in ["investment", "asset", "ppe", "capital"]):
-            cashflow["investing"].append(item)
-        elif any(keyword in ledger for keyword in ["loan", "borrowing", "equity", "capital", "dividend"]):
-            cashflow["financing"].append(item)
-        else:
-            cashflow["operating"].append(item)  # Default
+        combined_text = f"{ledger} {description}"
+        
+        classified = False
+        
+        # PRIORITY 1: Check for PPE/investing activities (CRITICAL - must be investing)
+        if any(keyword in combined_text for keyword in ppe_keywords):
+            # Special check: "Purchase of machinery" MUST be investing
+            if "purchase" in combined_text and any(kw in combined_text for kw in ["machinery", "equipment", "plant", "ppe"]):
+                cashflow["investing"].append({
+                    **item,
+                    "category": "investing",
+                    "sub_category": "purchase_of_ppe",
+                    "rule_applied": "AS3_investing_examples"
+                })
+                classified = True
+            elif "sale" in combined_text and any(kw in combined_text for kw in ["machinery", "equipment", "plant", "ppe"]):
+                cashflow["investing"].append({
+                    **item,
+                    "category": "investing",
+                    "sub_category": "sale_of_ppe",
+                    "rule_applied": "AS3_investing_examples"
+                })
+                classified = True
+            elif any(kw in combined_text for kw in ["investment", "loan advanced", "loan recovered"]):
+                cashflow["investing"].append({
+                    **item,
+                    "category": "investing",
+                    "sub_category": "investments_loans",
+                    "rule_applied": "AS3_investing_examples"
+                })
+                classified = True
+        
+        # PRIORITY 2: Check for financing activities
+        if not classified and any(keyword in combined_text for keyword in financing_keywords):
+            cashflow["financing"].append({
+                **item,
+                "category": "financing",
+                "rule_applied": "AS3_financing_examples"
+            })
+            classified = True
+        
+        # PRIORITY 3: Check for operating activities
+        if not classified and any(keyword in combined_text for keyword in operating_keywords):
+            cashflow["operating"].append({
+                **item,
+                "category": "operating",
+                "rule_applied": "AS3_operating_examples"
+            })
+            classified = True
+        
+        # PRIORITY 4: Check investing keywords (non-PPE)
+        if not classified and any(keyword in combined_text for keyword in investing_keywords):
+            cashflow["investing"].append({
+                **item,
+                "category": "investing",
+                "rule_applied": "AS3_investing_examples"
+            })
+            classified = True
+        
+        # Default fallback
+        if not classified:
+            cashflow["operating"].append({
+                **item,
+                "category": "operating",
+                "rule_applied": "default_fallback",
+                "note": "Defaulted to operating - review required"
+            })
+            unmatched_items.append(item)
+            flags.append(f"Item defaulted to operating: {ledger}")
     
-    return cashflow
+    # Build fractal output
+    micro = {
+        "items": items,
+        "cashflow": cashflow,
+        "unmatched_items": unmatched_items
+    }
+    
+    meso = {
+        "classification_summary": {
+            "operating_count": len(cashflow["operating"]),
+            "investing_count": len(cashflow["investing"]),
+            "financing_count": len(cashflow["financing"]),
+            "unmatched_count": len(unmatched_items)
+        },
+        "rulebook_used": bool(as3_section),
+        "flags": flags
+    }
+    
+    macro = {
+        "summary": {
+            "total_items": len(items),
+            "operating_total": sum(item.get("amount", 0) for item in cashflow["operating"]),
+            "investing_total": sum(item.get("amount", 0) for item in cashflow["investing"]),
+            "financing_total": sum(item.get("amount", 0) for item in cashflow["financing"]),
+            "rulebook_integrated": bool(as3_section),
+            "ppe_items_investing": sum(
+                1 for item in cashflow["investing"] 
+                if item.get("sub_category") == "purchase_of_ppe"
+            )
+        },
+        "flags": flags
+    }
+    
+    return {
+        "micro": micro,
+        "meso": meso,
+        "macro": macro
+    }
 
 
 def check_tb_errors(data: Dict[str, Any]) -> Dict[str, Any]:

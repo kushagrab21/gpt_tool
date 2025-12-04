@@ -105,9 +105,9 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint that verifies rulebook loading."""
+    """Health check endpoint that verifies rulebook loading and shows all available sections."""
     try:
-        from engine.rulebook_loader import get_rulebook
+        from engine.rulebook_loader import get_rulebook, get_section
         rulebook = get_rulebook()
         
         if rulebook is None:
@@ -123,21 +123,69 @@ async def health_check():
                 "error": "Sections is not a dict"
             }
         
-        # Check for key sections
-        key_sections = []
-        if "schedule_iii_engine" in sections:
-            key_sections.append("schedule_iii_engine")
-        if "gst_itc_engine" in sections:
-            key_sections.append("gst_itc_engine")
-        if "tds_tcs_engine" in sections:
-            key_sections.append("tds_tcs_engine")
+        # Check for key sections required by engines
+        key_sections_required = [
+            "schedule_iii_engine",
+            "gst_itc_engine",
+            "tds_tcs_engine",
+            "as_standards"
+        ]
+        
+        key_sections_present = []
+        key_sections_missing = []
+        
+        for section_name in key_sections_required:
+            if section_name in sections:
+                key_sections_present.append(section_name)
+            else:
+                key_sections_missing.append(section_name)
+        
+        # Check for additional important sections
+        additional_sections = []
+        for section_name in ["schedule_iii_engine", "gst_itc_engine", "tds_tcs_engine", 
+                            "as_standards", "schedule3_engine"]:
+            if section_name in sections and section_name not in key_sections_present:
+                additional_sections.append(section_name)
+        
+        # Verify specific rulebook blocks are available
+        rulebook_blocks = {
+            "schedule3": bool(get_section("schedule_iii_engine")),
+            "tds": bool(get_section("tds_tcs_engine")),
+            "cashflow": bool(get_section("as_standards")),  # AS3 is in as_standards
+            "gst": bool(get_section("gst_itc_engine")),
+            "journaling": bool(get_section("tds_tcs_engine")),  # TDS journal rules
+            "generic_expansion": True  # Always available via rulebook structure
+        }
+        
+        # Check for specific sub-sections
+        schedule3_section = get_section("schedule_iii_engine") or {}
+        tds_section = get_section("tds_tcs_engine") or {}
+        gst_section = get_section("gst_itc_engine") or {}
+        as_standards = get_section("as_standards") or {}
+        
+        sub_sections_status = {
+            "schedule3_mapping_rules": bool(schedule3_section.get("schedule_iii_mapping_rules")),
+            "tds_sections": bool(tds_section.get("tds_sections")),
+            "tds_journal_engine": bool(tds_section.get("tds_journal_engine")),
+            "gst_journal_rules": bool(gst_section.get("gst_journal_entry_rules")),
+            "as3_cashflow": bool(as_standards.get("AS3") if isinstance(as_standards, dict) else False)
+        }
+        
+        all_key_sections_present = len(key_sections_missing) == 0
         
         return {
-            "status": "healthy",
+            "status": "healthy" if all_key_sections_present else "degraded",
             "rulebook_loaded": True,
             "sections_count": len(sections),
-            "key_sections": key_sections,
-            "key_sections_present": len(key_sections) == 3
+            "all_sections": list(sections.keys()),
+            "key_sections": {
+                "present": key_sections_present,
+                "missing": key_sections_missing,
+                "all_present": all_key_sections_present
+            },
+            "rulebook_blocks": rulebook_blocks,
+            "sub_sections_status": sub_sections_status,
+            "additional_sections": additional_sections
         }
     except Exception as e:
         return {
