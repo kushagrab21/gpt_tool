@@ -26,5 +26,5 @@ EXPOSE 8000
 
 # Use gunicorn with uvicorn worker class for production
 # Render sets PORT environment variable dynamically
-CMD ["sh", "-c", "gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}"]
+CMD ["sh", "-c", "gunicorn ca_super_tool.main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}"]
 
