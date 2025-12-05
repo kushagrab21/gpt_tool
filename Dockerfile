@@ -15,7 +15,7 @@ COPY . .
 RUN python -c "import yaml; yaml.safe_load(open('/app/complete_ca_rulebook_v2.yaml'))" || (echo 'ERROR: Rulebook YAML validation failed' && exit 1)
 
 # Verify rulebook can be loaded by the loader
-RUN python -c "import sys; sys.path.insert(0, '/app'); from engine.rulebook_loader import get_rulebook; rb = get_rulebook(); assert rb is not None and 'sections' in rb, 'Rulebook loading failed'" || (echo 'ERROR: Rulebook loader test failed' && exit 1)
+RUN python -c "import sys; sys.path.insert(0, '/app'); from ca_super_tool.engine.rulebook_loader import get_rulebook; rb = get_rulebook(); assert rb is not None and 'sections' in rb, 'Rulebook loading failed'" || (echo 'ERROR: Rulebook loader test failed' && exit 1)
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
