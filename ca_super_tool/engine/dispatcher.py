@@ -31,29 +31,29 @@ def dispatch(task: str, fractal: dict, settings: dict) -> dict:
     task_normalized = task.strip().lower()
     
     # Import legacy engines (lazy import to avoid circular dependencies)
-    from engine.sales_invoice import run_sales_invoice_prepare
-    from engine.gst_reconcile import (
+    from ca_super_tool.engine.sales_invoice import run_sales_invoice_prepare
+    from ca_super_tool.engine.gst_reconcile import (
         run_auto_gst_fetch_and_map,
         run_gst_reconcile_2b_3b,
         run_gst_reconcile_3b_books,
         run_gst_reconcile_3b_r1
     )
-    from engine.tds_classifier import run_tds_liability
-    from engine.auto_entries import run_auto_entries
-    from engine.tax_audit import run_tax_audit
+    from ca_super_tool.engine.tds_classifier import run_tds_liability
+    from ca_super_tool.engine.auto_entries import run_auto_entries
+    from ca_super_tool.engine.tax_audit import run_tax_audit
     
     # Import new engines
-    from engine.schedule3_engine import classify_schedule3, group_schedule3, generate_schedule3_note
-    from engine.gst_engine import (
+    from ca_super_tool.engine.schedule3_engine import classify_schedule3, group_schedule3, generate_schedule3_note
+    from ca_super_tool.engine.gst_engine import (
         reconcile_3b_2b,
         classify_itc,
         detect_itc_mismatch,
         vendor_level_itc,
         check_gst_errors
     )
-    from engine.tds_engine import classify_section, tag_ledger, detect_default
-    from engine.journal_engine import suggest_journal_entries
-    from engine.fs_engine import (
+    from ca_super_tool.engine.tds_engine import classify_section, tag_ledger, detect_default
+    from ca_super_tool.engine.journal_engine import suggest_journal_entries
+    from ca_super_tool.engine.fs_engine import (
         map_tb_to_fs,
         classify_pnl,
         classify_bs,
@@ -61,10 +61,10 @@ def dispatch(task: str, fractal: dict, settings: dict) -> dict:
         check_tb_errors,
         analyze_ratios
     )
-    from engine.audit_engine import detect_redflags, test_ic_control
-    from engine.ledger_engine import normalize_ledgers, group_ledgers, map_ledger_groups, detect_ledger_errors
-    from engine.bank_reco_engine import match_bank_reco, detect_unmatched
-    from engine.generic_engine import expand_rules, generate_logic_tree, apply_mapping_rules
+    from ca_super_tool.engine.audit_engine import detect_redflags, test_ic_control
+    from ca_super_tool.engine.ledger_engine import normalize_ledgers, group_ledgers, map_ledger_groups, detect_ledger_errors
+    from ca_super_tool.engine.bank_reco_engine import match_bank_reco, detect_unmatched
+    from ca_super_tool.engine.generic_engine import expand_rules, generate_logic_tree, apply_mapping_rules
     
     # Legacy task routing map (preserve existing functionality)
     legacy_task_map = {

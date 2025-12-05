@@ -4,7 +4,7 @@ Handles Schedule III classification, grouping, and note generation.
 """
 
 from typing import Dict, Any, List
-from engine.rulebook_loader import get_section
+from ca_super_tool.engine.rulebook_loader import get_section
 
 
 def classify_schedule3(data: Dict[str, Any]) -> Dict[str, Any]:

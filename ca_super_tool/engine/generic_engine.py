@@ -4,7 +4,7 @@ Handles generic rule expansion, logic tree generation, and mapping rules.
 """
 
 from typing import Dict, Any, List
-from engine.rulebook_loader import get_rulebook, get_section
+from ca_super_tool.engine.rulebook_loader import get_rulebook, get_section
 
 
 def expand_rules(data: Dict[str, Any]) -> Dict[str, Any]:

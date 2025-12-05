@@ -4,7 +4,7 @@ Handles GST ITC classification, reconciliation, and vendor-level compliance.
 """
 
 from typing import Dict, Any, List
-from engine.rulebook_loader import get_section
+from ca_super_tool.engine.rulebook_loader import get_section
 
 
 def reconcile_3b_2b(data: Dict[str, Any]) -> Dict[str, Any]:

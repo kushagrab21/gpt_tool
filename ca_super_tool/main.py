@@ -10,10 +10,10 @@ import hashlib
 import json
 import logging
 
-from engine.dispatcher import dispatch
-from engine.normalize import normalize_input
-from engine.fractal import run_fractal_expansion
-from engine.invariants import enforce_invariants
+from ca_super_tool.engine.dispatcher import dispatch
+from ca_super_tool.engine.normalize import normalize_input
+from ca_super_tool.engine.fractal import run_fractal_expansion
+from ca_super_tool.engine.invariants import enforce_invariants
 
 # Configure logging (placeholder structure)
 logging.basicConfig(level=logging.INFO)
@@ -188,7 +188,7 @@ async def root():
 async def health_check():
     """Health check endpoint that verifies rulebook loading and shows all available sections."""
     try:
-        from engine.rulebook_loader import get_rulebook, get_section
+        from ca_super_tool.engine.rulebook_loader import get_rulebook, get_section
         rulebook = get_rulebook()
         
         if rulebook is None:
@@ -312,25 +312,16 @@ async def ca_super_tool(request: SuperToolRequest):
             settings=request.settings or {}
         )
         
-        # Step 5: Normalize result - extract macro.summary and preserve details
-        normalized_result = normalize_result(output_data)
-        
-        # Step 6: Extract flags safely (for metadata)
+        # Step 5: Extract flags safely (for metadata)
         flags = extract_flags(output_data)
         
-        # Step 7: Compute capsule (canonicalize before hashing)
+        # Step 6: Compute capsule (canonicalize before hashing)
         capsule = compute_capsule(
             input_data=request.data,
             output_data=output_data
         )
         
-        # Step 8: Structure response with consistent API schema
-        # result contains summary and details, metadata contains capsule and invariants
-        final_result = {
-            "summary": normalized_result.get("summary", {}),
-            "details": normalized_result.get("details", {})
-        }
-        
+        # Step 8: Structure response - expose fractal structure at top level
         final_metadata = {
             "capsule": capsule,
             "invariants_passed": invariants_passed,
@@ -341,15 +332,23 @@ async def ca_super_tool(request: SuperToolRequest):
         if flags:
             final_metadata["flags"] = flags
         
-        structured = structured_response(final_result, final_metadata)
+        # Build result with micro/meso/macro exposed at top level
+        final_result = {
+            "micro": output_data.get("micro"),
+            "meso": output_data.get("meso"),
+            "macro": output_data.get("macro"),
+            "summary": output_data.get("macro", {}).get("summary"),
+            "reasoning_tree": output_data.get("macro", {}).get("reasoning_tree"),
+            "metadata": final_metadata
+        }
         
         # Add invariant warning if needed
         if not invariants_passed:
-            structured["metadata"]["invariant_warning"] = invariant_report
+            final_result["metadata"]["invariant_warning"] = invariant_report
         
         return SuperToolResponse(
             status="success",
-            result=structured,
+            result=final_result,
             capsule=capsule
         )
     

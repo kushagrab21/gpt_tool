@@ -4,7 +4,7 @@ Handles TDS section classification, ledger tagging, and default detection.
 """
 
 from typing import Dict, Any, List
-from engine.rulebook_loader import get_section
+from ca_super_tool.engine.rulebook_loader import get_section
 
 
 def classify_section(data: Dict[str, Any]) -> Dict[str, Any]:

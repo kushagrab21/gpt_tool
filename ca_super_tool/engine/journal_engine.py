@@ -5,7 +5,7 @@ Fully integrated with rulebook for TDS, GST, and generic journaling.
 """
 
 from typing import Dict, Any, List, Optional
-from engine.rulebook_loader import get_section
+from ca_super_tool.engine.rulebook_loader import get_section
 import re
 from datetime import datetime
 

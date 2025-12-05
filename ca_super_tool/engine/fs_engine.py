@@ -4,7 +4,7 @@ Handles Trial Balance to Financial Statement mapping and classification.
 """
 
 from typing import Dict, Any, List
-from engine.rulebook_loader import get_section
+from ca_super_tool.engine.rulebook_loader import get_section
 
 
 def map_tb_to_fs(data: Dict[str, Any]) -> Dict[str, Any]:

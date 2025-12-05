@@ -112,6 +112,11 @@ def match_bank_reco(data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dictionary with matched and unmatched entries in fractal format
     """
+    # Initialize flags (preserve existing flags from input if present)
+    flags = data.get("flags", [])
+    if not isinstance(flags, list):
+        flags = []
+    
     # Handle both direct keys and nested structure (fractal micro)
     bank_statement = data.get("bank_statement", []) or data.get("bank_entries", []) or []
     books_entries = data.get("books_entries", []) or data.get("book_entries", []) or data.get("ledger_entries", []) or []
