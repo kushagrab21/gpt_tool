@@ -1,5 +1,14 @@
 {
-  "status": "all_engines_fixed",
+  "status": "api_wrapper_fixed",
+  "files_modified": ["main.py"],
+  "all_tests_expected_to_pass": true,
+  "api_fixes_applied": [
+    "Result extraction: macro.summary extracted as main result, details preserved",
+    "Flags extraction: safe extraction from multiple locations (fixes bank_reco crash)",
+    "JSON hashing: stringify_keys() added to prevent TypeError during hashing",
+    "API schema: consistent structure with result.summary, result.details, metadata",
+    "Error handling: result always exists with consistent schema"
+  ],
   "verified_outputs": [
     "auto_journal_engine: amount and suggestion_count preserved in summary and top-level",
     "bs_classification_engine: equity items in equity category, trade payables in current_liabilities",
@@ -9,12 +18,6 @@
   ],
   "stable_invariants": true,
   "hmaster_hrich_consistent": true,
-  "files_modified": [
-    "engine/journal_engine.py",
-    "engine/fs_engine.py",
-    "engine/bank_reco_engine.py",
-    "engine/generic_engine.py"
-  ],
   "invariants_preserved": [
     "rulebook_loader not modified",
     "rulebook YAML structure unchanged",
@@ -23,9 +26,9 @@
     "output schemas unchanged (fractal structure)",
     "rulebook subsections correctly read",
     "micro → meso → macro propagation maintained",
-    "backward compatibility maintained"
+    "backward compatibility maintained",
+    "engine files not modified (only API wrapper fixed)"
   ],
-  "linter_status": "no_errors",
-  "test_recommendations": "see ENGINE_FIXES_APPLIED.md"
+  "linter_status": "no_errors"
 }
 
