@@ -54,22 +54,99 @@ class SuperToolResponse(BaseModel):
     capsule: str
 
 
-def structured_response(result: Dict[str, Any], metadata: Dict[str, Any]) -> Dict[str, Any]:
+def extract_flags(output_data: Dict[str, Any]) -> list:
     """
-    Wrap results with standard structure.
+    Safely extract flags from output_data, checking multiple locations.
     
     Args:
-        result: The engine result
+        output_data: Engine output data (may be fractal structure)
+        
+    Returns:
+        List of flags (empty list if none found)
+    """
+    flags = (
+        output_data.get("flags", []) or
+        output_data.get("micro", {}).get("flags", []) or
+        output_data.get("meso", {}).get("flags", []) or
+        output_data.get("macro", {}).get("flags", []) or
+        []
+    )
+    return flags if isinstance(flags, list) else []
+
+
+def normalize_result(output_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalize engine output to consistent API schema.
+    Extracts macro.summary as main result and preserves details.
+    
+    Args:
+        output_data: Engine output (may be fractal structure or flat)
+        
+    Returns:
+        Normalized result with summary and details
+    """
+    # Check if output_data is a fractal structure
+    if isinstance(output_data, dict) and "macro" in output_data:
+        macro = output_data.get("macro", {})
+        summary = macro.get("summary", {}) if isinstance(macro, dict) else {}
+        
+        # If summary is empty, try to use the whole macro or output_data
+        if not summary:
+            summary = macro if isinstance(macro, dict) else output_data
+        
+        # Extract details (micro/meso/macro)
+        details = {
+            "micro": output_data.get("micro", {}),
+            "meso": output_data.get("meso", {}),
+            "macro": output_data.get("macro", {})
+        }
+        
+        return {
+            "summary": summary,
+            "details": details
+        }
+    else:
+        # Flat structure - use output_data as summary, no details
+        return {
+            "summary": output_data if isinstance(output_data, dict) else {},
+            "details": {}
+        }
+
+
+def structured_response(result: Dict[str, Any], metadata: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Wrap results with standard structure matching API schema.
+    
+    Args:
+        result: The engine result (normalized with summary and details)
         metadata: Metadata including capsule, invariant status, etc.
         
     Returns:
-        Structured response dictionary
+        Structured response dictionary with result and metadata
     """
     return {
         "result": result,
-        "metadata": metadata,
-        "engine_version": "1.0.0"
+        "metadata": metadata
     }
+
+
+def stringify_keys(obj: Any) -> Any:
+    """
+    Recursively convert all dictionary keys to strings to ensure JSON serialization stability.
+    This fixes TypeError when comparing bool and str during hashing.
+    
+    Args:
+        obj: Object to canonicalize (dict, list, or primitive)
+        
+    Returns:
+        Canonicalized object with all keys as strings
+    """
+    if isinstance(obj, dict):
+        return {str(k): stringify_keys(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [stringify_keys(i) for i in obj]
+    else:
+        return obj
 
 
 def compute_capsule(input_data: Dict[str, Any], output_data: Dict[str, Any], engine_version: str = "1.0.0") -> str:
@@ -84,10 +161,14 @@ def compute_capsule(input_data: Dict[str, Any], output_data: Dict[str, Any], eng
     Returns:
         SHA256 hash string representing the capsule
     """
+    # Canonicalize data before hashing to avoid TypeError
+    canonical_input = stringify_keys(input_data)
+    canonical_output = stringify_keys(output_data)
+    
     capsule_data = {
         "engine_version": engine_version,
-        "input_hash": hashlib.sha256(json.dumps(input_data, sort_keys=True).encode()).hexdigest(),
-        "output_hash": hashlib.sha256(json.dumps(output_data, sort_keys=True).encode()).hexdigest()
+        "input_hash": hashlib.sha256(json.dumps(canonical_input, sort_keys=True).encode()).hexdigest(),
+        "output_hash": hashlib.sha256(json.dumps(canonical_output, sort_keys=True).encode()).hexdigest()
     }
     capsule_str = json.dumps(capsule_data, sort_keys=True)
     return hashlib.sha256(capsule_str.encode()).hexdigest()
@@ -225,35 +306,46 @@ async def ca_super_tool(request: SuperToolRequest):
         logger.info(f"Invariants check: {'PASSED' if invariants_passed else 'WARNING'}")
         
         # Step 4: Dispatch to engine (pass fractal, engine will use fractal['micro'])
-        result = dispatch(
+        output_data = dispatch(
             task=request.task,
             fractal=fractal,
             settings=request.settings or {}
         )
         
-        # Step 5: Compute capsule
+        # Step 5: Normalize result - extract macro.summary and preserve details
+        normalized_result = normalize_result(output_data)
+        
+        # Step 6: Extract flags safely (for metadata)
+        flags = extract_flags(output_data)
+        
+        # Step 7: Compute capsule (canonicalize before hashing)
         capsule = compute_capsule(
             input_data=request.data,
-            output_data=result
+            output_data=output_data
         )
         
-        # Step 6: Structure response
-        metadata = {
-            "capsule": capsule,
-            "invariants_passed": invariants_passed,
-            "invariant_report": invariant_report,
-            "fractal_structure": {
-                "has_micro": "micro" in fractal,
-                "has_meso": "meso" in fractal,
-                "has_macro": "macro" in fractal
-            }
+        # Step 8: Structure response with consistent API schema
+        # result contains summary and details, metadata contains capsule and invariants
+        final_result = {
+            "summary": normalized_result.get("summary", {}),
+            "details": normalized_result.get("details", {})
         }
         
-        structured = structured_response(result, metadata)
+        final_metadata = {
+            "capsule": capsule,
+            "invariants_passed": invariants_passed,
+            "invariant_report": invariant_report
+        }
+        
+        # Add flags to metadata if present
+        if flags:
+            final_metadata["flags"] = flags
+        
+        structured = structured_response(final_result, final_metadata)
         
         # Add invariant warning if needed
         if not invariants_passed:
-            structured["invariant_warning"] = invariant_report
+            structured["metadata"]["invariant_warning"] = invariant_report
         
         return SuperToolResponse(
             status="success",
@@ -264,19 +356,39 @@ async def ca_super_tool(request: SuperToolRequest):
     except Exception as e:
         logger.error(f"Error processing task {request.task}: {str(e)}", exc_info=True)
         
-        # Return error response
+        # Return error response with consistent schema
         error_result = {
+            "summary": {
+                "error": str(e),
+                "error_type": type(e).__name__
+            },
+            "details": {}
+        }
+        
+        error_output = {
             "error": str(e),
             "error_type": type(e).__name__
         }
+        
         capsule = compute_capsule(
             input_data=request.data,
-            output_data=error_result
+            output_data=error_output
         )
+        
+        final_metadata = {
+            "capsule": capsule,
+            "invariants_passed": False,
+            "invariant_report": {
+                "error": str(e),
+                "error_type": type(e).__name__
+            }
+        }
+        
+        structured = structured_response(error_result, final_metadata)
         
         return SuperToolResponse(
             status="error",
-            result=error_result,
+            result=structured,
             capsule=capsule
         )
 
