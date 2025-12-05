@@ -195,44 +195,57 @@ def classify_bs(data: Dict[str, Any]) -> Dict[str, Any]:
                 break
         
         if matched and matched_category:
-            # Parse category (e.g., "non_current_assets/ppe" or "current_liabilities/other_current_liabilities")
+            # Parse category (e.g., "non_current_assets/ppe" or "current_liabilities/other_current_liabilities" or "equity")
             category_parts = matched_category.split("/")
+            main_category = category_parts[0] if category_parts else matched_category
             
-            if len(category_parts) >= 2:
-                main_category = category_parts[0]
-                sub_category = category_parts[1]
-                
-                # Add classification metadata to item
-                item_with_classification = {
-                    **item,
-                    "classified_category": matched_category,
-                    "rule_matched": rule.get("id", "")
-                }
-                
-                if "asset" in main_category.lower():
-                    if "non_current" in main_category.lower():
-                        classified["assets"]["non_current"].append(item_with_classification)
-                    else:
-                        classified["assets"]["current"].append(item_with_classification)
-                elif "liability" in main_category.lower() or "borrowing" in main_category.lower():
-                    if "non_current" in main_category.lower():
-                        classified["liabilities"]["non_current"].append(item_with_classification)
-                    else:
-                        classified["liabilities"]["current"].append(item_with_classification)
-                elif "equity" in main_category.lower() or "capital" in main_category.lower():
-                    classified["equity"].append(item_with_classification)
-                elif "pnl" in main_category.lower():
-                    # P&L items shouldn't be in BS, but handle gracefully
-                    flags.append(f"P&L item found in BS classification: {ledger}")
-                    unmatched_items.append(item)
+            # Add classification metadata to item
+            item_with_classification = {
+                **item,
+                "classified_category": matched_category,
+                "rule_matched": rule.get("id", "")
+            }
+            
+            # PRIORITY 1: Check for equity (must be checked before assets/liabilities)
+            if "equity" in main_category.lower():
+                classified["equity"].append(item_with_classification)
+                matched = True
+            # PRIORITY 2: Check for liabilities (including trade_payables, borrowings)
+            elif "liability" in main_category.lower() or "borrowing" in main_category.lower() or "payable" in matched_category.lower():
+                if "non_current" in main_category.lower() or "long_term" in matched_category.lower():
+                    classified["liabilities"]["non_current"].append(item_with_classification)
                 else:
-                    unmatched_items.append(item)
-            else:
+                    # Default trade payables and other current liabilities to current
+                    classified["liabilities"]["current"].append(item_with_classification)
+                matched = True
+            # PRIORITY 3: Check for assets
+            elif "asset" in main_category.lower():
+                if "non_current" in main_category.lower() or "long_term" in matched_category.lower():
+                    classified["assets"]["non_current"].append(item_with_classification)
+                else:
+                    classified["assets"]["current"].append(item_with_classification)
+                matched = True
+            # PRIORITY 4: Check for P&L items (shouldn't be in BS)
+            elif "pnl" in main_category.lower() or "profit_loss" in matched_category.lower():
+                flags.append(f"P&L item found in BS classification: {ledger}")
                 unmatched_items.append(item)
-        else:
-            # Fallback to balance type logic
-            if balance_type == "debit":
-                # Check if it's clearly current (cash, inventory, receivables)
+                matched = False
+            else:
+                # Unmatched category - use fallback logic below
+                matched = False
+        if not matched:
+            # Fallback to balance type logic (only if rulebook didn't match)
+            # CRITICAL: Trade payables and creditors are ALWAYS liabilities (credit balance)
+            if any(kw in ledger for kw in ["payable", "creditor", "trade payable", "sundry creditor"]):
+                # Trade payables are always current liabilities
+                classified["liabilities"]["current"].append(item)
+                flags.append(f"Item classified using fallback: trade payable -> current liability: {ledger}")
+            elif any(kw in ledger for kw in ["equity", "capital", "reserve", "surplus", "share capital"]):
+                # Equity items are always equity
+                classified["equity"].append(item)
+                flags.append(f"Item classified using fallback: equity: {ledger}")
+            elif balance_type == "debit":
+                # Debit balances are typically assets
                 if any(kw in ledger for kw in ["cash", "bank", "inventory", "stock", "receivable", "debtor", "advance"]):
                     classified["assets"]["current"].append(item)
                 elif any(kw in ledger for kw in ["ppe", "property", "plant", "equipment", "machinery", "building", "furniture", "intangible"]):
@@ -240,21 +253,22 @@ def classify_bs(data: Dict[str, Any]) -> Dict[str, Any]:
                 else:
                     # Default to non-current for debit balances
                     classified["assets"]["non_current"].append(item)
+                flags.append(f"Item classified using fallback: debit -> asset: {ledger}")
             elif balance_type == "credit":
-                if any(kw in ledger for kw in ["equity", "capital", "reserve", "surplus"]):
-                    classified["equity"].append(item)
-                elif any(kw in ledger for kw in ["payable", "creditor", "borrowing", "loan"]):
+                # Credit balances that aren't equity or payables are typically liabilities
+                if any(kw in ledger for kw in ["borrowing", "loan"]):
                     # Check if long-term
                     if any(kw in ledger for kw in ["long", "term", "non-current"]):
                         classified["liabilities"]["non_current"].append(item)
                     else:
                         classified["liabilities"]["current"].append(item)
                 else:
-                    # Default to current liability
+                    # Default to current liability for credit balances
                     classified["liabilities"]["current"].append(item)
-            
-            unmatched_items.append(item)
-            flags.append(f"Item classified using fallback logic: {ledger}")
+                flags.append(f"Item classified using fallback: credit -> liability: {ledger}")
+            else:
+                unmatched_items.append(item)
+                flags.append(f"Item could not be classified: {ledger}")
     
     # Build fractal output
     micro = {
@@ -446,19 +460,34 @@ def map_cashflow(data: Dict[str, Any]) -> Dict[str, Any]:
         "flags": flags
     }
     
+    # Calculate totals preserving micro-level data
+    operating_total = sum(float(item.get("amount", 0) or 0) for item in cashflow["operating"])
+    investing_total = sum(float(item.get("amount", 0) or 0) for item in cashflow["investing"])
+    financing_total = sum(float(item.get("amount", 0) or 0) for item in cashflow["financing"])
+    
     macro = {
         "summary": {
             "total_items": len(items),
-            "operating_total": sum(item.get("amount", 0) for item in cashflow["operating"]),
-            "investing_total": sum(item.get("amount", 0) for item in cashflow["investing"]),
-            "financing_total": sum(item.get("amount", 0) for item in cashflow["financing"]),
+            "operating_count": len(cashflow["operating"]),
+            "investing_count": len(cashflow["investing"]),
+            "financing_count": len(cashflow["financing"]),
+            "operating_total": operating_total,
+            "investing_total": investing_total,
+            "financing_total": financing_total,
+            "net_cash_flow": operating_total + investing_total + financing_total,
             "rulebook_integrated": bool(as3_section),
             "ppe_items_investing": sum(
                 1 for item in cashflow["investing"] 
                 if item.get("sub_category") == "purchase_of_ppe"
-            )
+            ),
+            "unmatched_count": len(unmatched_items)
         },
-        "flags": flags
+        "flags": flags,
+        "cashflow_totals": {
+            "operating": operating_total,
+            "investing": investing_total,
+            "financing": financing_total
+        }
     }
     
     return {

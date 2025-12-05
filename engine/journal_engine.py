@@ -361,6 +361,8 @@ def suggest_journal_entries(data: Dict[str, Any]) -> Dict[str, Any]:
         "summary": {
             "total_suggestions": len(suggestions),
             "total_amount": amount,
+            "amount": amount,  # Preserve amount field for summary wrapper
+            "suggestion_count": len(suggestions),  # Preserve suggestion_count for summary wrapper
             "has_tds": any(s.get("tds_amount", 0) > 0 for s in suggestions),
             "has_gst": any(s.get("gst_applicable", False) for s in suggestions),
             "rulebook_integrated": bool(tds_sections)
@@ -368,9 +370,14 @@ def suggest_journal_entries(data: Dict[str, Any]) -> Dict[str, Any]:
         "flags": flags
     }
     
-    return {
+    # Also add amount and suggestion_count at top level for compatibility
+    result = {
         "micro": micro,
         "meso": meso,
-        "macro": macro
+        "macro": macro,
+        "amount": amount,  # Top-level amount for summary wrapper
+        "suggestion_count": len(suggestions)  # Top-level suggestion_count for summary wrapper
     }
+    
+    return result
 

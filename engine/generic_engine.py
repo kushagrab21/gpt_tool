@@ -120,7 +120,11 @@ def expand_rules(data: Dict[str, Any]) -> Dict[str, Any]:
     else:
         # Generic expansion from all sections
         # Safe iteration: sections is guaranteed to be a dict
+        # CRITICAL FIX: Filter out non-string keys to prevent bool < str comparison errors
         for section_name, section_data in sections.items():
+            # Only process string keys to avoid TypeError when sorting/mixing types
+            if not isinstance(section_name, str):
+                continue
             if isinstance(section_data, dict):
                 expanded_rules.append({
                     "section": section_name,
@@ -165,7 +169,8 @@ def expand_rules(data: Dict[str, Any]) -> Dict[str, Any]:
         "rules_count": len(expanded_rules),
         "reasoning_chain": reasoning_chain,
         "rulebook_loaded": rulebook is not None,
-        "sections_available": list(sections.keys()) if isinstance(sections, dict) else []
+        # CRITICAL FIX: Filter to string keys only to prevent bool < str comparison errors
+        "sections_available": [k for k in sections.keys() if isinstance(k, str)] if isinstance(sections, dict) else []
     }
     
     macro = {

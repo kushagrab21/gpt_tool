@@ -1,0 +1,63 @@
+{
+  "steps": [
+    "1. Fix auto_journal_engine: Ensure amount and suggestion_count are preserved in output summary",
+    "2. Fix bs_classification_engine: Correct category mapping logic to align rulebook categories with engine output",
+    "3. Fix cashflow_engine: Fix macro summary to use correct keys and preserve micro-level data",
+    "4. Fix bank_reco_engine: Ensure book_entries and bank_statement entries bind correctly with proper data extraction",
+    "5. Fix generic_engine: Prevent bool < str comparison error by filtering/type-checking keys before sorting"
+  ],
+  "engine_targets": [
+    "auto_journal_engine",
+    "bs_classification_engine", 
+    "cashflow_engine",
+    "bank_reco_engine",
+    "generic_rule_expansion_engine"
+  ],
+  "file_targets": [
+    "engine/journal_engine.py",
+    "engine/fs_engine.py",
+    "engine/bank_reco_engine.py",
+    "engine/generic_engine.py"
+  ],
+  "root_causes": {
+    "auto_journal_engine": {
+      "diagnosis": "Internal engine works correctly and extracts amount (360000), but output summary shows amount: 0.0. The issue is in the output structure - amount is in micro but not properly propagated to summary level.",
+      "code_defect": "In suggest_journal_entries(), the macro summary uses 'total_amount' but the wrapper may be looking for 'amount'. Also, suggestion_count is in meso but may not be in the expected summary location."
+    },
+    "bs_classification_engine": {
+      "diagnosis": "Rulebook categories (e.g., 'non_current_liabilities/long_term_borrowings') are misaligned with engine classification logic. Equity items mapped under assets, trade payables under assets.",
+      "code_defect": "In classify_bs(), the category parsing logic incorrectly classifies items. The rulebook uses 'non_current_liabilities/long_term_borrowings' but the engine may be misinterpreting 'equity' or 'liability' keywords in category paths."
+    },
+    "cashflow_engine": {
+      "diagnosis": "Micro-level classification is correct, but macro summary is overwritten or using wrong keys.",
+      "code_defect": "In map_cashflow(), the macro summary structure may be overwriting micro data or using incorrect aggregation keys."
+    },
+    "bank_reco_engine": {
+      "diagnosis": "Provided book_entries and bank_statement entries never bind, always returning empty matched lists.",
+      "code_defect": "In match_bank_reco(), the data extraction from input may be incorrect. The function expects 'bank_statement' and 'books_entries' keys, but input may use different keys or structure."
+    },
+    "generic_rule_expansion_engine": {
+      "diagnosis": "Sorting rulebook keys causes bool < str comparison error when rulebook contains mixed-type keys.",
+      "code_defect": "In expand_rules() or when iterating sections, if rulebook has boolean keys mixed with string keys, sorting will fail with TypeError: '<' not supported between instances of 'bool' and 'str'."
+    }
+  },
+  "expected_outputs": {
+    "auto_journal_engine": "After fix: amount field should show 360000 (not 0.0), suggestion_count should be present in summary",
+    "bs_classification_engine": "After fix: Equity items should be in equity category, trade payables in current_liabilities (not assets)",
+    "cashflow_engine": "After fix: Macro summary should preserve micro-level totals and use consistent key names",
+    "bank_reco_engine": "After fix: Matched entries should appear in matched list when book_entries and bank_statement entries have matching amounts/dates/descriptions",
+    "generic_rule_expansion_engine": "After fix: No TypeError when processing rulebook sections with mixed key types"
+  },
+  "invariants": [
+    "Do NOT modify rulebook_loader or rulebook YAML structure",
+    "Do NOT change core rulebook semantics",
+    "Do NOT introduce randomness or non-deterministic behavior",
+    "Output schemas MUST remain the same (fractal structure: micro/meso/macro)",
+    "All engines must correctly read rulebook subsections",
+    "All engines must propagate micro → meso → macro summaries",
+    "All engines must return accurate fields expected by Colab runner",
+    "Test output must improve and NEVER regress",
+    "No breaking backward compatibility for other engines"
+  ]
+}
+

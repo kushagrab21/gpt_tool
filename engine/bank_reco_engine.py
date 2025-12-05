@@ -112,8 +112,23 @@ def match_bank_reco(data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dictionary with matched and unmatched entries in fractal format
     """
-    bank_statement = data.get("bank_statement", [])
-    books_entries = data.get("books_entries", [])
+    # Handle both direct keys and nested structure (fractal micro)
+    bank_statement = data.get("bank_statement", []) or data.get("bank_entries", []) or []
+    books_entries = data.get("books_entries", []) or data.get("book_entries", []) or data.get("ledger_entries", []) or []
+    
+    # Ensure both are lists
+    if not isinstance(bank_statement, list):
+        bank_statement = []
+    if not isinstance(books_entries, list):
+        books_entries = []
+    
+    # Validate input data
+    if not bank_statement:
+        flags.append("Warning: bank_statement is empty - no entries to match")
+    if not books_entries:
+        flags.append("Warning: books_entries is empty - no entries to match")
+    if not bank_statement and not books_entries:
+        flags.append("Error: Both bank_statement and books_entries are empty")
     
     # Get matching parameters from data or use defaults
     amount_tolerance = float(data.get("amount_tolerance", 0.01))
@@ -125,7 +140,6 @@ def match_bank_reco(data: Dict[str, Any]) -> Dict[str, Any]:
     matched = []
     unmatched_bank = []
     unmatched_books = []
-    flags = []
     
     used_books_indices = set()
     

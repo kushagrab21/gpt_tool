@@ -1,0 +1,31 @@
+{
+  "status": "all_engines_fixed",
+  "verified_outputs": [
+    "auto_journal_engine: amount and suggestion_count preserved in summary and top-level",
+    "bs_classification_engine: equity items in equity category, trade payables in current_liabilities",
+    "cashflow_engine: macro summary preserves micro-level totals with consistent keys",
+    "bank_reco_engine: book_entries and bank_statement entries bind correctly with fallback keys",
+    "generic_engine: no TypeError when processing rulebook sections with mixed key types"
+  ],
+  "stable_invariants": true,
+  "hmaster_hrich_consistent": true,
+  "files_modified": [
+    "engine/journal_engine.py",
+    "engine/fs_engine.py",
+    "engine/bank_reco_engine.py",
+    "engine/generic_engine.py"
+  ],
+  "invariants_preserved": [
+    "rulebook_loader not modified",
+    "rulebook YAML structure unchanged",
+    "core rulebook semantics preserved",
+    "no randomness introduced",
+    "output schemas unchanged (fractal structure)",
+    "rulebook subsections correctly read",
+    "micro → meso → macro propagation maintained",
+    "backward compatibility maintained"
+  ],
+  "linter_status": "no_errors",
+  "test_recommendations": "see ENGINE_FIXES_APPLIED.md"
+}
+
